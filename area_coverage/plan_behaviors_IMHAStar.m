@@ -4,7 +4,7 @@
 % Date        : February 5, 2016
 % Other Files :
 
-function [best_sequence] = plan_behaviors(map, target_coverage, ...
+function [final_sequence] = plan_behaviors(map, target_coverage, ...
     robot_radius, obstacles, behaviors, initial_poses, ...
     ti, tf, dt, dT)
 
@@ -21,6 +21,7 @@ function [best_sequence] = plan_behaviors(map, target_coverage, ...
     best_cost(1:numH) = Inf;
     best_sequence{numH} = [];
     best_poses{numH} = [];
+    final_sequence = [];
     make_sequence_astar();
     assert(any(best_cost < Inf));
 
@@ -38,7 +39,10 @@ function [best_sequence] = plan_behaviors(map, target_coverage, ...
         while ~isempty(q_priority{1})
             for i = 2 : numH
                 if (q_priority{i}(end)<= H2 * q_priority{1}(end))
-                    if best_cost(i)<=q_priority{i}(end), return; end
+                    if best_cost(i)<=q_priority{i}(end) 
+                        %final_sequence = best_sequence(i);
+                        return; 
+                    end
                     q_priority{i}(end) = [];
                     data = q_data{i}{end}; q_data{i}(end) = [];
                     cost = data{1};
@@ -48,12 +52,13 @@ function [best_sequence] = plan_behaviors(map, target_coverage, ...
                     tbegin = ti + numel(sequence)*dT;
                     tend = min([tbegin+dT-dt tf]);
                     if tbegin>tf
-                        %sequence
-                        %coverage_ratio(unseen)
+                        sequence
+                        coverage_ratio(unseen)
                         if (coverage_ratio(unseen) >= target_coverage) && (cost < best_cost(i))
                             best_cost(i) = cost;
                             best_sequence{i} = sequence
                             best_poses{i} = poses;
+                             final_sequence = best_sequence{i};
                             I = (q_priority{i} < best_cost(i));
                             q_priority{i} = q_priority{i}(I);
                             q_data{i} = q_data{i}(I);
@@ -100,7 +105,9 @@ function [best_sequence] = plan_behaviors(map, target_coverage, ...
                         q_data{i} = q_data{i}(I);
                     end
                 else
-                    if best_cost(1)<=q_priority{1}(end), return; end
+                    if best_cost(1)<=q_priority{1}(end)   
+                        return; 
+                    end
                     q_priority{1}(end) = [];
                     data = q_data{1}{end}; q_data{1}(end) = [];
                     cost = data{1};
@@ -110,11 +117,12 @@ function [best_sequence] = plan_behaviors(map, target_coverage, ...
                     tbegin = ti + numel(sequence)*dT;
                     tend = min([tbegin+dT-dt tf]);
                     if tbegin>tf
-                        %sequence
-                        %coverage_ratio(unseen)
+                        sequence
+                        coverage_ratio(unseen)
                         if (coverage_ratio(unseen) >= target_coverage) && (cost < best_cost(1))
                             best_cost(1) = cost;
                             best_sequence{1} = sequence
+                            final_sequence = best_sequence{1};
                             best_poses{1} = poses;
                             I = (q_priority{1} < best_cost(1));
                             q_priority{1} = q_priority{1}(I);
