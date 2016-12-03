@@ -18,27 +18,29 @@ function [best_sequence] = plan_behaviors(map, target_coverage, ...
     H2 = 1.0;
     numH = 2;
     
-    best_cost(1:numH+1) = Inf;
-    best_sequence{numH+1} = [];
-    best_poses{numH+1} = [];
+    best_cost(1:numH) = Inf;
+    best_sequence{numH} = [];
+    best_poses{numH} = [];
     make_sequence_astar();
     assert(any(best_cost < Inf));
-    foundSol = 0;
-    
+
     function make_sequence_astar()
         initial_unseen = ones(map.grid_y, map.grid_x);
         %initialization
+        q_data = cell(1,numH);
+        q_priority = cell(1,numH);
         for i = 1 : numH
-            q_data{i,1} = {0, [], initial_poses, initial_unseen};
-            q_priority{i,1} = heuristic_cost_to_go(...
-            initial_unseen, initial_poses, target_coverage, map, i);
+            q_data{i}{1} = {0, [], initial_poses, initial_unseen};
+            q_priority{i} = [heuristic_cost_to_go(...
+            initial_unseen, initial_poses, target_coverage, map, i)];
         end
+        %imha* implementation
         while ~isempty(q_priority{1})
             for i = 2 : numH
                 if (q_priority{i}(end)<= H2 * q_priority{1}(end))
                     if best_cost(i)<=q_priority{i}(end), return; end
                     q_priority{i}(end) = [];
-                    data = q_data{i,end}; q_data{i,end} = [];
+                    data = q_data{i}{end}; q_data{i}(end) = [];
                     cost = data{1};
                     sequence = data{2};
                     poses = data{3};
@@ -46,8 +48,8 @@ function [best_sequence] = plan_behaviors(map, target_coverage, ...
                     tbegin = ti + numel(sequence)*dT;
                     tend = min([tbegin+dT-dt tf]);
                     if tbegin>tf
-                        sequence
-                        coverage_ratio(unseen)
+                        %sequence
+                        %coverage_ratio(unseen)
                         if (coverage_ratio(unseen) >= target_coverage) && (cost < best_cost(i))
                             best_cost(i) = cost;
                             best_sequence{i} = sequence
@@ -55,6 +57,7 @@ function [best_sequence] = plan_behaviors(map, target_coverage, ...
                             I = (q_priority{i} < best_cost(i));
                             q_priority{i} = q_priority{i}(I);
                             q_data{i} = q_data{i}(I);
+                            disp('inad')
                         end
                         continue;
                     end
@@ -62,8 +65,6 @@ function [best_sequence] = plan_behaviors(map, target_coverage, ...
                     datas = cell(1,B);
                     parfor b=1:B
                         behavior = behaviors{b};
-                        %sequence
-                        %b
                         sequence_next = [sequence; b];
                         poses_next = poses;
                         unseen_next = unseen;
@@ -101,7 +102,7 @@ function [best_sequence] = plan_behaviors(map, target_coverage, ...
                 else
                     if best_cost(1)<=q_priority{1}(end), return; end
                     q_priority{1}(end) = [];
-                    data = q_data{1,end}; q_data{1,end} = [];
+                    data = q_data{1}{end}; q_data{1}(end) = [];
                     cost = data{1};
                     sequence = data{2};
                     poses = data{3};
@@ -109,8 +110,8 @@ function [best_sequence] = plan_behaviors(map, target_coverage, ...
                     tbegin = ti + numel(sequence)*dT;
                     tend = min([tbegin+dT-dt tf]);
                     if tbegin>tf
-                        sequence
-                        coverage_ratio(unseen)
+                        %sequence
+                        %coverage_ratio(unseen)
                         if (coverage_ratio(unseen) >= target_coverage) && (cost < best_cost(1))
                             best_cost(1) = cost;
                             best_sequence{1} = sequence
@@ -118,6 +119,7 @@ function [best_sequence] = plan_behaviors(map, target_coverage, ...
                             I = (q_priority{1} < best_cost(1));
                             q_priority{1} = q_priority{1}(I);
                             q_data{1} = q_data{1}(I);
+                            disp('adm')
                         end
                         continue;
                     end
@@ -176,7 +178,7 @@ function c = heuristic_cost_to_go(unseen, poses, target, map, i)
         c = (sqrt(2) / 3) * (map.size_x / map.grid_x) * ... 
         max(0, target*length(unseen(:)) - sum(1-unseen(:)) - 4*N);
     else
-        c = 0;
+        c = Inf;
     end
 end
 
