@@ -55,7 +55,7 @@ function [best_sequence] = plan_behaviors(map, target_coverage, ...
             parfor b=1:B
                 behavior = behaviors{b};
                 sequence
-                b
+                
                 sequence_next = [sequence; b];
                 poses_next = poses;
                 unseen_next = unseen;
