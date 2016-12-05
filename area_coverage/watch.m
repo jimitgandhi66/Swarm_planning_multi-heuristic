@@ -15,7 +15,7 @@ addpath('../behaviors');
 data_folder = '../data';
 
 %% Find data
-trial_id = 'trial_20161130T191029';
+trial_id = 'trial_20161205T045935';
 data_file = 'N_10_tf_00100d0000_dt_00000d1000_dT_00010d0000';
 
 %% Load data

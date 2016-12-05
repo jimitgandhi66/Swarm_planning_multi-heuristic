@@ -15,7 +15,7 @@ function [final_sequence] = plan_behaviors(map, target_coverage, ...
     N = size(initial_poses,1);
     B = numel(behaviors);
     H1 = 10.0;
-    H2 = 1.0;
+    H2 = 10.0;
     numH = 2;
     
     best_cost(1:numH) = Inf;
@@ -33,12 +33,12 @@ function [final_sequence] = plan_behaviors(map, target_coverage, ...
         for i = 1 : numH
             q_data{i}{1} = {0, [], initial_poses, initial_unseen};
             q_priority{i} = [heuristic_cost_to_go(...
-            initial_unseen, initial_poses, target_coverage, map, i)];
+            initial_unseen, initial_poses, target_coverage, map, i, @antirendezvous)];
         end
         %imha* implementation
         while ~isempty(q_priority{1})
             for i = 2 : numH
-                if (q_priority{i}(end)<= H2 * q_priority{1}(end))
+                if ~isempty(q_priority{i}) && (q_priority{i}(end)<= H2 * q_priority{1}(end)) 
                     if best_cost(i)<=q_priority{i}(end) 
                         %final_sequence = best_sequence(i);
                         return; 
@@ -58,11 +58,11 @@ function [final_sequence] = plan_behaviors(map, target_coverage, ...
                             best_cost(i) = cost;
                             best_sequence{i} = sequence
                             best_poses{i} = poses;
-                             final_sequence = best_sequence{i};
+                            final_sequence = best_sequence{i};
                             I = (q_priority{i} < best_cost(i));
                             q_priority{i} = q_priority{i}(I);
                             q_data{i} = q_data{i}(I);
-                            disp('inad')
+                            best_cost(i)
                         end
                         continue;
                     end
@@ -89,7 +89,7 @@ function [final_sequence] = plan_behaviors(map, target_coverage, ...
                         if ~valid_sequence, continue; end
                         cost_next = cost_next + sum(unseen_next(:))/length(unseen_next(:));
                         cost_to_go = heuristic_cost_to_go(unseen_next, poses, ...
-                        target_coverage, map, i);
+                        target_coverage, map, i, b);
                         cost_estimate = cost_next + H1*cost_to_go;
                         if cost_estimate < best_cost(i)
                             priorities(b) = cost_estimate; 
@@ -127,7 +127,7 @@ function [final_sequence] = plan_behaviors(map, target_coverage, ...
                             I = (q_priority{1} < best_cost(1));
                             q_priority{1} = q_priority{1}(I);
                             q_data{1} = q_data{1}(I);
-                            disp('adm')
+                            best_cost(1)
                         end
                         continue;
                     end
@@ -154,7 +154,7 @@ function [final_sequence] = plan_behaviors(map, target_coverage, ...
                         if ~valid_sequence, continue; end
                         cost_next = cost_next + sum(unseen_next(:))/length(unseen_next(:));
                         cost_to_go = heuristic_cost_to_go(unseen_next, poses, ...
-                        target_coverage, map, 1);
+                        target_coverage, map, 1, b);
                         cost_estimate = cost_next + H1*cost_to_go;
                         if cost_estimate < best_cost(1)
                             priorities(b) = cost_estimate; 
@@ -180,13 +180,20 @@ function [final_sequence] = plan_behaviors(map, target_coverage, ...
 
 end
 
-function c = heuristic_cost_to_go(unseen, poses, target, map, i)
+function c = heuristic_cost_to_go(unseen, poses, target, map, i, behavior)
     N = size(poses,1);
     if (i==1)
         c = (sqrt(2) / 3) * (map.size_x / map.grid_x) * ... 
         max(0, target*length(unseen(:)) - sum(1-unseen(:)) - 4*N);
-    else
-        c = Inf;
+    end
+    if (i==2)
+        c = (sqrt(2) / 3) * (map.size_x / map.grid_x) * ... 
+        max(0, target*length(unseen(:)) - sum(1-unseen(:)) - 4*N);
+        if isequal(behavior, @antirendezvous)
+            c = 0.2*c;
+        else
+            c = 5*c;
+        end
     end
 end
 
