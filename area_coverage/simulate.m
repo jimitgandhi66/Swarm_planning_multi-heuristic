@@ -24,7 +24,11 @@ map.size_y = 100;
 map.size_x = 100;
 map.grid_y = 100;
 map.grid_x = 100;
+% <<<<<<< HEAD
 target_coverage = 0.25;
+% =======
+target_coverage = 0.1;
+% >>>>>>> a48d534efb3f61a0cc14382945e3705dba9f3375
 robot_radius = 0.5;
 O = 0;
 obstacle_max_sides = 8;

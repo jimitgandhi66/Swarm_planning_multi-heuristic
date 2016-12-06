@@ -15,8 +15,8 @@ function [final_sequence] = plan_behaviors(map, target_coverage, ...
     N = size(initial_poses,1);
     B = numel(behaviors);
     H1 = 10.0;
-    H2 = 1.0;
-    numH = 2;
+    H2 = 10.0;
+    numH = 4;
     
     best_cost(1:numH) = Inf;
     best_sequence{numH} = [];
@@ -33,14 +33,16 @@ function [final_sequence] = plan_behaviors(map, target_coverage, ...
         for i = 1 : numH
             q_data{i}{1} = {0, [], initial_poses, initial_unseen};
             q_priority{i} = [heuristic_cost_to_go(...
-            initial_unseen, initial_poses, target_coverage, map, i)];
+            initial_unseen, initial_poses, target_coverage, map, 0,i)];
         end
         %imha* implementation
         while ~isempty(q_priority{1})
             for i = 2 : numH
+               
                 if (q_priority{i}(end)<= H2 * q_priority{1}(end))
                     if best_cost(i)<=q_priority{i}(end) 
                         %final_sequence = best_sequence(i);
+                        disp('hi')
                         return; 
                     end
                     q_priority{i}(end) = [];
@@ -51,21 +53,24 @@ function [final_sequence] = plan_behaviors(map, target_coverage, ...
                     unseen = data{4};
                     tbegin = ti + numel(sequence)*dT;
                     tend = min([tbegin+dT-dt tf]);
-                    if tbegin>tf
+                    if (tbegin>tf || (coverage_ratio(unseen) >= target_coverage && (cost < best_cost(i))))
                         sequence
                         coverage_ratio(unseen)
                         if (coverage_ratio(unseen) >= target_coverage) && (cost < best_cost(i))
                             best_cost(i) = cost;
                             best_sequence{i} = sequence
                             best_poses{i} = poses;
-                             final_sequence = best_sequence{i};
+                            final_sequence = best_sequence{i};
                             I = (q_priority{i} < best_cost(i));
                             q_priority{i} = q_priority{i}(I);
                             q_data{i} = q_data{i}(I);
                             disp('inad')
+                            i
+                            return;
                         end
                         continue;
                     end
+                   
                     priorities = -1*ones(1,B);
                     datas = cell(1,B);
                     parfor b=1:B
@@ -89,7 +94,7 @@ function [final_sequence] = plan_behaviors(map, target_coverage, ...
                         if ~valid_sequence, continue; end
                         cost_next = cost_next + sum(unseen_next(:))/length(unseen_next(:));
                         cost_to_go = heuristic_cost_to_go(unseen_next, poses, ...
-                        target_coverage, map, i);
+                        target_coverage, map,b, i);
                         cost_estimate = cost_next + H1*cost_to_go;
                         if cost_estimate < best_cost(i)
                             priorities(b) = cost_estimate; 
@@ -117,11 +122,11 @@ function [final_sequence] = plan_behaviors(map, target_coverage, ...
                     tbegin = ti + numel(sequence)*dT;
                     tend = min([tbegin+dT-dt tf]);
                     if tbegin>tf
-                        sequence
+                        sequence;
                         coverage_ratio(unseen)
                         if (coverage_ratio(unseen) >= target_coverage) && (cost < best_cost(1))
                             best_cost(1) = cost;
-                            best_sequence{1} = sequence
+                            best_sequence{1} = sequence;
                             final_sequence = best_sequence{1};
                             best_poses{1} = poses;
                             I = (q_priority{1} < best_cost(1));
@@ -154,7 +159,7 @@ function [final_sequence] = plan_behaviors(map, target_coverage, ...
                         if ~valid_sequence, continue; end
                         cost_next = cost_next + sum(unseen_next(:))/length(unseen_next(:));
                         cost_to_go = heuristic_cost_to_go(unseen_next, poses, ...
-                        target_coverage, map, 1);
+                        target_coverage, map,b, 1);
                         cost_estimate = cost_next + H1*cost_to_go;
                         if cost_estimate < best_cost(1)
                             priorities(b) = cost_estimate; 
@@ -180,14 +185,29 @@ function [final_sequence] = plan_behaviors(map, target_coverage, ...
 
 end
 
-function c = heuristic_cost_to_go(unseen, poses, target, map, i)
+function c = heuristic_cost_to_go(unseen, poses, target, map, b,i)
     N = size(poses,1);
     if (i==1)
-        c = (sqrt(2) / 3) * (map.size_x / map.grid_x) * ... 
+         c = (sqrt(2) / 3) * (map.size_x / map.grid_x) * ... 
+         max(0, target*length(unseen(:)) - sum(1-unseen(:)) - 4*N);
+    elseif(i==2)
+        c = (map.size_x / map.grid_x) * ... 
         max(0, target*length(unseen(:)) - sum(1-unseen(:)) - 4*N);
-    else
-        c = Inf;
-    end
+%          c = Inf;
+       if(b==1)
+        c = 0.02 * c;
+       else
+        c = 10 * c;
+       end
+    elseif(i==3)
+        c = (map.size_x / map.grid_x) * ... 
+        max(0, target*length(unseen(:)) - sum(1-unseen(:)) - 4*N);
+        c = c - N* min(pdist(poses));
+    elseif(i==4)
+        c = (map.size_x / map.grid_x) * ... 
+        max(0, target*length(unseen(:)) - sum(1-unseen(:)) - 4*N);
+       c = c + 2*map.size_x -(max(poses(:,1))-min(poses(:,1))+max(poses(:,2))- min(poses(:,2)));  
+     end    
 end
 
 function unseen = fill_unseen(unseen, poses, map)
