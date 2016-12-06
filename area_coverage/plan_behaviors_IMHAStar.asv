@@ -15,8 +15,8 @@ function [final_sequence] = plan_behaviors(map, target_coverage, ...
     N = size(initial_poses,1);
     B = numel(behaviors);
     H1 = 10.0;
-    H2 = 10.0;
-    numH = 4;
+    H2 = 20.0;
+    numH = 3;
     
     best_cost(1:numH) = Inf;
     best_sequence{numH} = [];
@@ -89,7 +89,7 @@ function [final_sequence] = plan_behaviors(map, target_coverage, ...
                             end
                             poses_delta = poses_next(:,1:2)' - poses_old(:,1:2)';
                             cost_next = cost_next + sum(sqrt(sum(poses_delta.^2,1)));
-                            unseen_next = fill_unseen(unseen_next,poses_next,map);
+                            unseen_next = fill_unseen(unseen_next,poses_next,map)
                         end
                         if ~valid_sequence, continue; end
                         cost_next = cost_next + sum(unseen_next(:))/length(unseen_next(:));
@@ -121,7 +121,7 @@ function [final_sequence] = plan_behaviors(map, target_coverage, ...
                     unseen = data{4};
                     tbegin = ti + numel(sequence)*dT;
                     tend = min([tbegin+dT-dt tf]);
-                    if tbegin>tf
+                    if (tbegin>tf || (coverage_ratio(unseen) >= target_coverage && (cost < best_cost(i))))
                         sequence;
                         coverage_ratio(unseen)
                         if (coverage_ratio(unseen) >= target_coverage) && (cost < best_cost(1))
@@ -133,6 +133,7 @@ function [final_sequence] = plan_behaviors(map, target_coverage, ...
                             q_priority{1} = q_priority{1}(I);
                             q_data{1} = q_data{1}(I);
                             disp('adm')
+                            return;
                         end
                         continue;
                     end
@@ -190,24 +191,26 @@ function c = heuristic_cost_to_go(unseen, poses, target, map, b,i)
     if (i==1)
          c = (sqrt(2) / 3) * (map.size_x / map.grid_x) * ... 
          max(0, target*length(unseen(:)) - sum(1-unseen(:)) - 4*N);
+     
     elseif(i==2)
         c = (map.size_x / map.grid_x) * ... 
         max(0, target*length(unseen(:)) - sum(1-unseen(:)) - 4*N);
 %          c = Inf;
        if(b==1)
-        c = 0.02 * c;
+        c = 0.02*c;
        else
-        c = 10 * c;
+        c =  10*c;
        end
     elseif(i==3)
         c = (map.size_x / map.grid_x) * ... 
         max(0, target*length(unseen(:)) - sum(1-unseen(:)) - 4*N);
-        c = c - N* min(pdist(poses));
+        c = max(0,c + N* min(pdist(poses)));
     elseif(i==4)
-        c = (map.size_x / map.grid_x) * ... 
+         c = (map.size_x / map.grid_x) * ... 
         max(0, target*length(unseen(:)) - sum(1-unseen(:)) - 4*N);
-       c = c + 2*map.size_x -(max(poses(:,1))-min(poses(:,1))+max(poses(:,2))- min(poses(:,2)));  
-     end    
+        c = c +2 * size max(poses(:,1))-min(poses(:,1)) + max(poses(:,2))- min(poses(:,2));
+    end
+    
 end
 
 function unseen = fill_unseen(unseen, poses, map)
