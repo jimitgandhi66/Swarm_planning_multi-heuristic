@@ -47,6 +47,7 @@ function [best_sequence] = plan_behaviors(map, target_coverage, ...
                     I = (q_priority < best_cost);
                     q_priority = q_priority(I);
                     q_data = q_data(I);
+                    best_cost
                 end
                 continue;
             end
