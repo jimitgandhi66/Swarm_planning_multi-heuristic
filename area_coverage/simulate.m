@@ -36,11 +36,14 @@ initial_box.bottom_left_y = map.size_y/2 - map.size_y/8;
 initial_box.width = map.size_x/8;
 initial_box.height = map.size_y/8;
 
+init_poses_x = [0.696266337082995;0.093820026774866;0.525404403859336;0.530344218392863;0.861139811393332;0.484853333552102;0.393456361215266;0.671431139674026;0.741257943454207;0.520052467390387];  
+init_poses_y = [0.404579995857626;0.448372912066495;0.365816176838171;0.763504640848813;0.627896379614169;0.771980385554245;0.932853570278820;0.972740854003014;0.192028349427775;0.138874202829155];
+init_poses_th = [0.347712671277525;0.149997253831683;0.586092067231462;0.262145317727807;0.044454092278238;0.754933267231179;0.242785357820962;0.442402313001943;0.687796085120107;0.359228210401861];
 %% Robots
 robot = zeros(N,3);
-robot(:,1) = initial_box.bottom_left_x + initial_box.width*rand(N,1);
-robot(:,2) = initial_box.bottom_left_y + initial_box.height*rand(N,1);
-robot(:,3) = wrapToPi(2*pi*rand(N,1));
+robot(:,1) = initial_box.bottom_left_x + initial_box.width*init_poses_x;
+robot(:,2) = initial_box.bottom_left_y + initial_box.height*init_poses_y;
+robot(:,3) = wrapToPi(2*pi*init_poses_th);
 labels = cellstr(num2str((1:N)'));
 
 ts = round((tf-ti)/dt) + 1;
@@ -88,7 +91,7 @@ behaviors = {@antirendezvous, @flocking, @flock_east, @flock_north, @flock_west,
 
 %% Plan
 time_to_plan_start = tic;
-behavior_sequence = plan_behaviors(map, target_coverage, robot_radius, ...
+[behavior_sequence, cost] = plan_behaviors(map, target_coverage, robot_radius, ...
    inflated_obstacles, behaviors, poses(:,:,1), ti, tf, dt, dT);
 time_to_plan_end = toc(time_to_plan_start)
 

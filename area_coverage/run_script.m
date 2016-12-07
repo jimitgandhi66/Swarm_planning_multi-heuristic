@@ -87,7 +87,7 @@ behaviors = {@antirendezvous, @flocking, @flock_east, @flock_north, @flock_west,
 %% Plan IMHAStar
 parfor i = 1:num
     %% Robots
-    i
+    %i
     robot = zeros(N,3);
     robot(:,1) = initial_box.bottom_left_x + initial_box.width*rand(N,1);
     robot(:,2) = initial_box.bottom_left_y + initial_box.height*rand(N,1);
@@ -99,7 +99,7 @@ parfor i = 1:num
     poses(:,:,1) = robot;
     
     %% Grid
-    map_grid = 0.5*ones([map.grid_y map.grid_x ts]);
+    %map_grid = 0.5*ones([map.grid_y map.grid_x ts]);
     
     %% Plan
     time_to_plan_start = tic;

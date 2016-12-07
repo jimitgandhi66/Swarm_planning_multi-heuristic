@@ -37,10 +37,9 @@ function [final_sequence, final_cost] = plan_behaviors(map, target_coverage, ...
             initial_unseen, initial_poses, target_coverage, map, 0,i)];
         end
         %imha* implementation
-        while ~isempty(q_priority{1})
-            for i = 2 : numH
-               
-                if (q_priority{i}(end)<= H2 * q_priority{1}(end))
+        for i = 2 : numH
+            while ~isempty(q_priority{1})
+              if (~isempty(q_priority{i})) && (q_priority{i}(end)<= H2 * q_priority{1}(end))
                     if best_cost(i)<=q_priority{i}(end) 
                         %final_sequence = best_sequence(i);
                         %disp('hi')
@@ -54,7 +53,7 @@ function [final_sequence, final_cost] = plan_behaviors(map, target_coverage, ...
                     unseen = data{4};
                     tbegin = ti + numel(sequence)*dT;
                     tend = min([tbegin+dT-dt tf]);
-                    if (tbegin>tf || (coverage_ratio(unseen) >= target_coverage && (cost < best_cost(i))))
+                    if ((tbegin>tf) || (coverage_ratio(unseen) >= target_coverage && (cost < best_cost(i))))
                         %sequence
                         %coverage_ratio(unseen)
                         if (coverage_ratio(unseen) >= target_coverage) && (cost < best_cost(i))
@@ -194,24 +193,27 @@ function c = heuristic_cost_to_go(unseen, poses, target, map, b,i)
     if (i==1)
          c = (sqrt(2) / 3) * (map.size_x / map.grid_x) * ... 
          max(0, target*length(unseen(:)) - sum(1-unseen(:)) - 4*N);
-%     elseif(i==2)
-%         c = (map.size_x / map.grid_x) * ... 
-%         max(0, target*length(unseen(:)) - sum(1-unseen(:)) - 4*N);
-% %          c = Inf;
-%        if(b==1)
-%         c = 0.02 * c;
-%        else
-%         c = 10 * c;
-%        end
-%     elseif(i==3)
-%         c = (map.size_x / map.grid_x) * ... 
-%         max(0, target*length(unseen(:)) - sum(1-unseen(:)) - 4*N);
-%         c = c - N* min(pdist(poses));
     elseif(i==2)
         c = (map.size_x / map.grid_x) * ... 
         max(0, target*length(unseen(:)) - sum(1-unseen(:)) - 4*N);
-       c = c + 2*map.size_x -(max(poses(:,1))-min(poses(:,1))+max(poses(:,2))- min(poses(:,2)));  
-     end    
+%          c = Inf;
+       if(b==1)
+        c =  0.02 * c;
+       end
+%     elseif(i==2)
+%         c = (map.size_x / map.grid_x) * ... 
+%         max(0, target*length(unseen(:)) - sum(1-unseen(:)) - 4*N);
+%          c = c - N* min(pdist(poses));
+%      elseif(i==2)
+%         c = (map.size_x / map.grid_x) * ... 
+%         max(0, target*length(unseen(:)) - sum(1-unseen(:)) - 4*N);
+%        c = c + (2*map.size_x -(max(poses(:,1))-min(poses(:,1))+max(poses(:,2))- min(poses(:,2))));  
+%     elseif(i==2)
+%         c = (map.size_x / map.grid_x) * ... 
+%         max(0, target*length(unseen(:)) - sum(1-unseen(:)) - 4*N);
+%        c = c + sqrt((map.size_x-(max(poses(:,1))-min(poses(:,1))))^2 + (map.size_y-(max(poses(:,2))-min(poses(:,2))))^2);
+    end   
+     
 end
 
 function unseen = fill_unseen(unseen, poses, map)
