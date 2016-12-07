@@ -24,11 +24,8 @@ map.size_y = 100;
 map.size_x = 100;
 map.grid_y = 100;
 map.grid_x = 100;
-% <<<<<<< HEAD
-target_coverage = 0.25;
-% =======
+
 target_coverage = 0.1;
-% >>>>>>> a48d534efb3f61a0cc14382945e3705dba9f3375
 robot_radius = 0.5;
 O = 0;
 obstacle_max_sides = 8;
@@ -91,7 +88,7 @@ behaviors = {@antirendezvous, @flocking, @flock_east, @flock_north, @flock_west,
 
 %% Plan
 time_to_plan_start = tic;
-behavior_sequence = plan_behaviors_IMHAStar(map, target_coverage, robot_radius, ...
+behavior_sequence = plan_behaviors(map, target_coverage, robot_radius, ...
    inflated_obstacles, behaviors, poses(:,:,1), ti, tf, dt, dT);
 time_to_plan_end = toc(time_to_plan_start)
 

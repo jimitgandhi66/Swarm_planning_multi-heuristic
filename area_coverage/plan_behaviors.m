@@ -4,7 +4,7 @@
 % Date        : February 5, 2016
 % Other Files :
 
-function [best_sequence] = plan_behaviors(map, target_coverage, ...
+function [best_sequence, best_cost] = plan_behaviors(map, target_coverage, ...
     robot_radius, obstacles, behaviors, initial_poses, ...
     ti, tf, dt, dT)
 
@@ -38,16 +38,17 @@ function [best_sequence] = plan_behaviors(map, target_coverage, ...
             tbegin = ti + numel(sequence)*dT;
             tend = min([tbegin+dT-dt tf]);
             if tbegin>tf
-                sequence
-                coverage_ratio(unseen)
+                %sequence
+                %coverage_ratio(unseen)
                 if (coverage_ratio(unseen) >= target_coverage) && (cost < best_cost)
                     best_cost = cost;
-                    best_sequence = sequence
+                    best_sequence = sequence;
                     best_poses = poses;
                     I = (q_priority < best_cost);
                     q_priority = q_priority(I);
                     q_data = q_data(I);
-                    best_cost
+                    %best_cost
+                    %final_cost = best_cost(1);
                 end
                 continue;
             end
@@ -55,8 +56,8 @@ function [best_sequence] = plan_behaviors(map, target_coverage, ...
             datas = cell(1,B);
             parfor b=1:B
                 behavior = behaviors{b};
-                sequence
-                b
+                %sequence
+                %b
                 sequence_next = [sequence; b];
                 poses_next = poses;
                 unseen_next = unseen;

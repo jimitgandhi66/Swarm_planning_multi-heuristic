@@ -4,7 +4,7 @@
 % Date        : February 5, 2016
 % Other Files :
 
-function [final_sequence] = plan_behaviors(map, target_coverage, ...
+function [final_sequence, final_cost] = plan_behaviors(map, target_coverage, ...
     robot_radius, obstacles, behaviors, initial_poses, ...
     ti, tf, dt, dT)
 
@@ -15,13 +15,14 @@ function [final_sequence] = plan_behaviors(map, target_coverage, ...
     N = size(initial_poses,1);
     B = numel(behaviors);
     H1 = 10.0;
-    H2 = 10.0;
-    numH = 4;
+    H2 = 20.0;
+    numH = 2;
     
     best_cost(1:numH) = Inf;
     best_sequence{numH} = [];
     best_poses{numH} = [];
     final_sequence = [];
+    final_cost = 0;
     make_sequence_astar();
     assert(any(best_cost < Inf));
 
@@ -42,7 +43,7 @@ function [final_sequence] = plan_behaviors(map, target_coverage, ...
                 if (q_priority{i}(end)<= H2 * q_priority{1}(end))
                     if best_cost(i)<=q_priority{i}(end) 
                         %final_sequence = best_sequence(i);
-                        disp('hi')
+                        %disp('hi')
                         return; 
                     end
                     q_priority{i}(end) = [];
@@ -54,18 +55,19 @@ function [final_sequence] = plan_behaviors(map, target_coverage, ...
                     tbegin = ti + numel(sequence)*dT;
                     tend = min([tbegin+dT-dt tf]);
                     if (tbegin>tf || (coverage_ratio(unseen) >= target_coverage && (cost < best_cost(i))))
-                        sequence
-                        coverage_ratio(unseen)
+                        %sequence
+                        %coverage_ratio(unseen)
                         if (coverage_ratio(unseen) >= target_coverage) && (cost < best_cost(i))
                             best_cost(i) = cost;
-                            best_sequence{i} = sequence
+                            best_sequence{i} = sequence;
                             best_poses{i} = poses;
                             final_sequence = best_sequence{i};
                             I = (q_priority{i} < best_cost(i));
                             q_priority{i} = q_priority{i}(I);
                             q_data{i} = q_data{i}(I);
-                            disp('inad')
-                            i
+                            %disp('inad')
+                            %i
+                            final_cost = best_cost(i);
                             return;
                         end
                         continue;
@@ -122,8 +124,8 @@ function [final_sequence] = plan_behaviors(map, target_coverage, ...
                     tbegin = ti + numel(sequence)*dT;
                     tend = min([tbegin+dT-dt tf]);
                     if tbegin>tf
-                        sequence;
-                        coverage_ratio(unseen)
+                        %sequence;
+                        %coverage_ratio(unseen)
                         if (coverage_ratio(unseen) >= target_coverage) && (cost < best_cost(1))
                             best_cost(1) = cost;
                             best_sequence{1} = sequence;
@@ -132,7 +134,9 @@ function [final_sequence] = plan_behaviors(map, target_coverage, ...
                             I = (q_priority{1} < best_cost(1));
                             q_priority{1} = q_priority{1}(I);
                             q_data{1} = q_data{1}(I);
-                            disp('adm')
+                            %disp('adm')
+                            final_cost = best_cost(1);
+                            
                         end
                         continue;
                     end
@@ -190,20 +194,20 @@ function c = heuristic_cost_to_go(unseen, poses, target, map, b,i)
     if (i==1)
          c = (sqrt(2) / 3) * (map.size_x / map.grid_x) * ... 
          max(0, target*length(unseen(:)) - sum(1-unseen(:)) - 4*N);
+%     elseif(i==2)
+%         c = (map.size_x / map.grid_x) * ... 
+%         max(0, target*length(unseen(:)) - sum(1-unseen(:)) - 4*N);
+% %          c = Inf;
+%        if(b==1)
+%         c = 0.02 * c;
+%        else
+%         c = 10 * c;
+%        end
+%     elseif(i==3)
+%         c = (map.size_x / map.grid_x) * ... 
+%         max(0, target*length(unseen(:)) - sum(1-unseen(:)) - 4*N);
+%         c = c - N* min(pdist(poses));
     elseif(i==2)
-        c = (map.size_x / map.grid_x) * ... 
-        max(0, target*length(unseen(:)) - sum(1-unseen(:)) - 4*N);
-%          c = Inf;
-       if(b==1)
-        c = 0.02 * c;
-       else
-        c = 10 * c;
-       end
-    elseif(i==3)
-        c = (map.size_x / map.grid_x) * ... 
-        max(0, target*length(unseen(:)) - sum(1-unseen(:)) - 4*N);
-        c = c - N* min(pdist(poses));
-    elseif(i==4)
         c = (map.size_x / map.grid_x) * ... 
         max(0, target*length(unseen(:)) - sum(1-unseen(:)) - 4*N);
        c = c + 2*map.size_x -(max(poses(:,1))-min(poses(:,1))+max(poses(:,2))- min(poses(:,2)));  
@@ -236,5 +240,4 @@ function r = valid_poses(poses, obstacles, map)
     end
     r = true;
 end
-
 
